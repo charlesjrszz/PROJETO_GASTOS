@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data:;" />
+    <title>Fin Organizer</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 20px }
+      header { display:flex; gap:10px; align-items:center }
+      table { width:100%; border-collapse: collapse; margin-top: 10px }
+      th, td { border: 1px solid #ddd; padding: 6px }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Fin Organizer</h1>
+      <button id="importBtn">Importar arquivos</button>
+      <button id="refreshBtn">Atualizar transações</button>
+      <button id="exportBtn">Exportar CSV</button>
+    </header>
+
+    <section>
+      <h3>Resumo de importações</h3>
+      <div id="summary"></div>
+
+      <h3>Transações</h3>
+      <div>
+        Filtro por data: <input type="date" id="from"> - <input type="date" id="to">
+        Categoria: <input id="filterCategory" placeholder="Categoria">
+        <button id="applyFilter">Aplicar</button>
+      </div>
+
+      <table id="txTable">
+        <thead>
+          <tr><th>Data</th><th>Conta</th><th>Descrição</th><th>Valor</th><th>Categoria</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h3>Categorias e Regras</h3>
+      <div>
+        <input id="newCategoryName" placeholder="Nova categoria">
+        <button id="addCategoryBtn">Adicionar categoria</button>
+      </div>
+      <div id="categoriesList" style="margin-top:10px"></div>
+    </section>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>
