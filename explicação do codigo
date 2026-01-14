@@ -1,0 +1,105 @@
+# 📘 Documentação Técnica - Fin Organizer
+
+Este documento serve como guia de referência para a arquitetura, estrutura de arquivos e fluxo de dados do projeto **Fin Organizer**.
+
+---
+
+## 🏗 Visão Geral da Arquitetura
+
+O projeto utiliza a arquitetura padrão do **Electron**, separando a lógica de sistema da interface visual:
+
+1.  **Main Process (Node.js)**: Acesso ao sistema operacional, sistema de arquivos e banco de dados.
+2.  **Renderer Process (Web)**: Interface gráfica interativa.
+3.  **Preload (Bridge)**: Camada de segurança que conecta os dois processos.
+
+---
+
+## 📂 Estrutura de Pastas e Arquivos
+
+```text
+PROJETO_GASTOS/
+├── main.js                # Ponto de entrada (Backend local)
+├── preload.js             # Ponte de segurança (ContextBridge)
+├── store.js               # Banco de dados e Regras de Negócio
+├── package.json           # Dependências e Scripts
+├── parsers/               # Módulos de leitura de arquivos
+│   ├── ofxParser.js       # Leitor de extratos bancários (.ofx)
+│   └── xlsxParser.js      # Leitor de planilhas (.xlsx, .csv)
+└── renderer/              # Frontend (Interface do Usuário)
+    ├── index.html         # Estrutura HTML
+
+
+EXPLICAÇÃO SOBRE CADA PASTA 
+
+1. Processo Principal (Backend)
+main.js
+Responsável por iniciar a aplicação e orquestrar as operações nativas.
+
+Ciclo de Vida: Cria a janela principal (createWindow) carregando o index.html.
+
+Comunicação (IPC): Escuta requisições do frontend através do ipcMain.
+
+select-files: Abre o seletor de arquivos do SO, invoca os parsers e salva os dados.
+
+export-csv: Gera o arquivo de saída CSV.
+
+Delegator: Repassa chamadas de banco de dados (get-transactions, add-category) diretamente para o store.js.
+
+store.js
+Atua como o "Banco de Dados" e "Controller" da aplicação.
+
+Persistência: Utiliza a biblioteca electron-store para gravar dados em um arquivo JSON local (finance-data).
+
+CRUD: Gerencia a leitura e escrita de transações (getAllTransactions, addTransaction) e categorias.
+
+Categorização Automática: A função applyCategoryRules(tx) verifica se a descrição de uma nova transação corresponde a alguma regra criada pelo usuário e atribui a categoria automaticamente antes de salvar.
+
+2. Processamento de Arquivos (Parsers)
+Scripts auxiliares para transformar arquivos externos em objetos JavaScript padronizados.
+
+parsers/ofxParser.js
+Focado em arquivos bancários .ofx ou .qfx.
+
+Usa Expressões Regulares (Regex) para extrair blocos de transações (<STMTTRN>), datas e valores.
+
+parsers/xlsxParser.js
+Lê planilhas .xlsx, .ods e .csv usando a biblioteca xlsx.
+
+Heurística: Tenta identificar automaticamente colunas de Data, Valor e Descrição procurando por sinônimos (ex: "Histórico", "Amount", "Valor (R$)").
+
+Realiza a limpeza de formatação monetária (remove símbolos de moeda e corrige pontuação).
+
+3. Camada de Segurança
+preload.js
+Utiliza contextBridge para expor uma API segura (window.electronAPI) para o navegador.
+
+Define exatamente quais funções o frontend pode executar no backend (ex: selectFiles, addRule), impedindo execução de código arbitrário.
+
+4. Interface (Frontend)
+renderer/index.html
+Define o layout visual: cabeçalho com ações, área de resumo, tabela de transações e painel de categorias.
+
+renderer/renderer.js
+Gerencia a interatividade da página.
+
+Renderização: Constrói a tabela HTML e listas de categorias dinamicamente com base nos dados recebidos.
+
+Filtros Locais: Implementa a lógica de filtrar transações por data ou nome na memória, sem nova consulta ao disco.
+
+Eventos: Captura cliques (botões de importar, excluir, adicionar regra) e chama as funções da electronAPI.
+
+🔄 Exemplo de Fluxo: Importação
+Usuário clica em "Importar arquivos" na interface (renderer.js).
+
+Frontend chama window.electronAPI.selectFiles() (preload.js).
+
+Backend (main.js) abre a janela de seleção de arquivos.
+
+Backend lê o arquivo e escolhe o parser adequado (ofxParser ou xlsxParser).
+
+Dados extraídos são enviados para store.addTransaction() (store.js).
+
+O store.js aplica as regras de categoria (applyCategoryRules) e salva no JSON.
+
+Frontend recebe o resumo e atualiza a tabela na tela.
+    └── renderer.js        # Lógica da tela (DOM e Eventos)
