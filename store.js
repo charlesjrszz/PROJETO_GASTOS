@@ -71,6 +71,43 @@ function deleteRuleFromCategory(catId, ruleId) {
   return true;
 }
 
+function deleteTransaction(id) {
+  let txs = store.get('transactions', []);
+  txs = txs.filter(t => t.id !== id);
+  store.set('transactions', txs);
+  return true;
+}
+
+function updateTransaction(transaction) {
+  const txs = store.get('transactions', []);
+  const idx = txs.findIndex(t => t.id === transaction.id);
+  if (idx >= 0) {
+    txs[idx] = transaction;
+    store.set('transactions', txs);
+    return true;
+  }
+  return false;
+}
+
+function deleteTransactions(ids) {
+  let txs = store.get('transactions', []);
+  txs = txs.filter(t => !ids.includes(t.id));
+  store.set('transactions', txs);
+  return true;
+}
+
+function updateTransactionsBulk(ids, updates) {
+  const txs = store.get('transactions', []);
+  ids.forEach(id => {
+    const idx = txs.findIndex(t => t.id === id);
+    if (idx >= 0) {
+      txs[idx] = { ...txs[idx], ...updates };
+    }
+  });
+  store.set('transactions', txs);
+  return true;
+}
+
 function applyCategoryRules(tx) {
   const cats = store.get('categories', []);
   const text = (tx.description || '').toLowerCase();
@@ -95,5 +132,9 @@ module.exports = {
   updateCategory,
   deleteCategory,
   addRuleToCategory,
-  deleteRuleFromCategory
+  deleteRuleFromCategory,
+  deleteTransaction,
+  updateTransaction,
+  deleteTransactions,
+  updateTransactionsBulk
 };

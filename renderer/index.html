@@ -15,6 +15,7 @@
   </head>
   <body class="bg-slate-50 text-slate-900 min-h-screen">
     <div class="max-w-7xl mx-auto p-6">
+      
       <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <div>
           <h1 class="text-2xl font-bold text-indigo-600 flex items-center gap-2">
@@ -61,19 +62,39 @@
           </section>
 
           <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-5 border-b border-slate-100 flex justify-between items-center">
-              <h3 class="text-lg font-semibold">Transações</h3>
-              <div id="summary" class="text-xs text-indigo-600 font-medium italic"></div>
+            <div class="p-5 border-b border-slate-100 space-y-3">
+              <div class="flex justify-between items-center">
+                <h3 class="text-lg font-semibold">Transações</h3>
+                <div id="summary" class="text-xs text-indigo-600 font-medium italic"></div>
+              </div>
+              
+              <div id="bulkActionsBar" class="hidden bg-blue-50 p-3 rounded-lg border border-blue-200 flex items-center gap-3">
+                <span id="selectedCount" class="text-sm font-medium text-blue-700">0 selecionadas</span>
+                <div class="flex gap-2 ml-auto">
+                  <button id="bulkEditBtn" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded-md font-medium">
+                    ✏️ Editar
+                  </button>
+                  <button id="bulkDeleteBtn" class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded-md font-medium">
+                    🗑️ Deletar
+                  </button>
+                  <button id="bulkCancelBtn" class="bg-slate-400 hover:bg-slate-500 text-white text-xs px-3 py-1.5 rounded-md font-medium">
+                    Cancelar
+                  </button>
+                </div>
+              </div>
             </div>
+
             <div class="overflow-x-auto max-h-[500px]">
               <table id="txTable" class="w-full text-left">
                 <thead class="bg-slate-50 sticky top-0">
                   <tr>
+                    <th class="p-4 text-xs font-bold text-slate-500 uppercase"><input type="checkbox" id="selectAll" class="cursor-pointer"></th>
                     <th class="p-4 text-xs font-bold text-slate-500 uppercase">Data</th>
                     <th class="p-4 text-xs font-bold text-slate-500 uppercase">Conta</th>
                     <th class="p-4 text-xs font-bold text-slate-500 uppercase">Descrição</th>
                     <th class="p-4 text-xs font-bold text-slate-500 uppercase text-right">Valor</th>
                     <th class="p-4 text-xs font-bold text-slate-500 uppercase">Categoria</th>
+                    <th class="p-4 text-xs font-bold text-slate-500 uppercase">Ações</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -84,8 +105,9 @@
         </main>
 
         <aside class="space-y-6">
+          
           <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-            <h3 class="text-lg font-semibold mb-4">Configurações</h3>
+            <h3 class="text-lg font-semibold mb-4">Categorias</h3>
             
             <div class="space-y-4">
               <div class="flex flex-col gap-2">
@@ -98,11 +120,105 @@
                 </div>
               </div>
 
-              <div id="categoriesList" class="space-y-3 mt-6">
+              <div id="categoriesList" class="space-y-3 mt-6 max-h-[300px] overflow-y-auto">
                 </div>
             </div>
           </section>
+
+          <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold flex items-center gap-2">
+                ☁️ Arquivos Cloud
+              </h3>
+              <button id="refreshHistoryBtn" class="text-xs text-indigo-600 hover:text-indigo-800 hover:underline">
+                Atualizar
+              </button>
+            </div>
+            
+            <ul id="cloudHistoryList" class="space-y-3 max-h-[300px] overflow-y-auto pr-2 text-sm">
+              <li class="text-slate-400 italic text-center py-4">Carregando...</li>
+            </ul>
+          </section>
+
         </aside>
+      </div>
+    </div>
+
+    <div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+        <h2 class="text-xl font-semibold mb-4">Editar Transação</h2>
+        <form id="editForm" class="space-y-4">
+          <input type="hidden" id="editId">
+          
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Data</label>
+            <input type="date" id="editDate" class="border border-slate-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Descrição</label>
+            <input type="text" id="editDescription" placeholder="Descrição" class="border border-slate-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Valor</label>
+            <input type="number" id="editAmount" placeholder="0.00" step="0.01" class="border border-slate-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Conta</label>
+            <input type="text" id="editAccount" placeholder="Conta" class="border border-slate-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Categoria</label>
+            <input type="text" id="editCategory" placeholder="Categoria" class="border border-slate-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+
+          <div class="flex gap-2 pt-4">
+            <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
+              Salvar
+            </button>
+            <button type="button" id="closeEditModal" class="flex-1 bg-slate-300 hover:bg-slate-400 text-slate-900 px-4 py-2 rounded-md font-medium transition-colors">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="bulkEditModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+        <h2 class="text-xl font-semibold mb-4">Editar em Massa (<span id="bulkEditCount">0</span> itens)</h2>
+        <form id="bulkEditForm" class="space-y-4">
+          
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="bulkEditDateCheck">
+            <label class="text-sm font-medium cursor-pointer">Alterar data</label>
+            <input type="date" id="bulkEditDate" disabled class="flex-1 border border-slate-300 rounded-md px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="bulkEditCategoryCheck">
+            <label class="text-sm font-medium cursor-pointer">Alterar categoria</label>
+            <input type="text" id="bulkEditCategory" placeholder="Categoria" disabled class="flex-1 border border-slate-300 rounded-md px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="bulkEditAccountCheck">
+            <label class="text-sm font-medium cursor-pointer">Alterar conta</label>
+            <input type="text" id="bulkEditAccount" placeholder="Conta" disabled class="flex-1 border border-slate-300 rounded-md px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+
+          <div class="flex gap-2 pt-4">
+            <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
+              Aplicar Alterações
+            </button>
+            <button type="button" id="closeBulkEditModal" class="flex-1 bg-slate-300 hover:bg-slate-400 text-slate-900 px-4 py-2 rounded-md font-medium transition-colors">
+              Cancelar
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 
